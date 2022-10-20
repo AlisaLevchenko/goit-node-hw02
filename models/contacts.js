@@ -1,17 +1,16 @@
 const fs = require("fs/promises");
 const path = require("path");
 const { v4: uuidv4 } = require("uuid");
-const createError = require("../helpers/error");
+const createError = require("../helpers/createError");
 
 const contactsPath = path.join(__dirname, "./contacts.json");
 
 async function listContacts() {
-  try {
-    const contactsList = await fs.readFile(contactsPath, "utf8");
-    return JSON.parse(contactsList);
-  } catch (err) {
-    return console.error(err);
+  const contactsList = await fs.readFile(contactsPath, "utf8");
+  if (!contactsList) {
+    throw createError(404, "Contacts not found");
   }
+  return JSON.parse(contactsList);
 }
 
 async function getContactById(contactId) {
@@ -19,24 +18,26 @@ async function getContactById(contactId) {
   const hasFindContact = contactsList.find(
     (contact) => contact.id === contactId.toString()
   );
+  if (!hasFindContact) {
+    throw createError(404, "Contact not found");
+  }
   return hasFindContact;
 }
 
 async function removeContact(contactId) {
-  try {
-    const allContacts = await listContacts();
-    const contactToRemove = allContacts.find(
-      (contact) => contact.id === contactId.toString()
-    );
-    const newContactsList = JSON.stringify(
-      allContacts.filter((contact) => contact.id !== contactId.toString())
-    );
-    fs.writeFile(contactsPath, newContactsList);
-
-    return contactToRemove;
-  } catch (err) {
-    return console.error(err);
+  const allContacts = await listContacts();
+  const contactToRemove = allContacts.find(
+    (contact) => contact.id === contactId.toString()
+  );
+  if (!contactToRemove) {
+    throw createError(404, "Not found");
   }
+  const newContactsList = JSON.stringify(
+    allContacts.filter((contact) => contact.id !== contactId.toString())
+  );
+  fs.writeFile(contactsPath, newContactsList);
+
+  return contactToRemove;
 }
 
 async function addContact(name, email, phone) {

@@ -2,8 +2,7 @@ const express = require("express");
 const logger = require("morgan");
 const cors = require("cors");
 
-const contactsRouter = require("./routes/api/contacts");
-// const contactsRouter = require("./api/contactsRouter");
+const contactsRouter = require("./routes/api/contactsRoutes");
 
 const app = express();
 
@@ -20,7 +19,8 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  res.status(500).json({ message: err.message });
+  const { status = 500, message = "Internal Server Error" } = err;
+  res.status(status).json({ message });
 });
 
 module.exports = app;
