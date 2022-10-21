@@ -4,12 +4,17 @@ const {
   addContact,
   removeContact,
   updateContact,
-} = require("../models/contacts.js");
+} = require("../services/contactService");
+
 const {
   addContactSchema,
   updateContactSchema,
+  schemaUpdateFavorite,
 } = require("../schemas/createContactSchema");
+
 const { bodyValidateSchema } = require("../schemas/bodyValidateSchema");
+
+const objectIdSchema = require("../schemas/objectIdSchema");
 
 const getContactsController = async (req, res, next) => {
   try {
@@ -22,23 +27,23 @@ const getContactsController = async (req, res, next) => {
 
 const getContactByIdController = async (req, res, next) => {
   try {
+    const { error } = objectIdSchema.validate(req.params.contactId);
+    if (error) {
+      next(error);
+    }
     const contactById = await getContactById(req.params.contactId);
-    if (contactById) res.status(200).json(contactById);
-    else res.status(404).json({ message: "Not found" });
+    res.status(200).json(contactById);
   } catch (error) {
     next(error);
   }
 };
+
 const addContactController = async (req, res, next) => {
   try {
     bodyValidateSchema(addContactSchema, req.body);
-    const { name, email, phone } = req.body;
-    if (!name || !email || !phone) {
-      res.status(400).json({ message: "missing required name field" });
-    } else {
-      const contact = await addContact(name, email, phone);
-      res.status(201).json(contact);
-    }
+    const contact = await addContact(req.body);
+
+    res.status(201).json(contact);
   } catch (error) {
     next(error);
   }
@@ -46,10 +51,8 @@ const addContactController = async (req, res, next) => {
 
 const deleteContactController = async (req, res, next) => {
   try {
-    const removedContact = await removeContact(req.params.contactId);
-    if (removedContact) {
-      res.json({ message: "contact deleted" });
-    } else res.status(404).json({ message: "Not found" });
+    await removeContact(req.params.contactId);
+    res.json({ message: "contact deleted" });
   } catch (error) {
     next(error);
   }
@@ -69,6 +72,15 @@ const updateContactController = async (req, res, next) => {
     next(error);
   }
 };
+const updateFavoriteController = async (req, res, next) => {
+  try {
+    validateRequestBody(schemaUpdateFavorite, req.body);
+    const contact = await updateStatusContact(req.params.contactId, req.body);
+    res.status(200).json(contact);
+  } catch (error) {
+    next(error);
+  }
+};
 
 module.exports = {
   getContactsController,
@@ -76,4 +88,5 @@ module.exports = {
   addContactController,
   deleteContactController,
   updateContactController,
+  updateFavoriteController,
 };

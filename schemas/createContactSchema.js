@@ -36,9 +36,17 @@ const updateContactSchema = Joi.object({
     "string.base": "name should be a type of string",
     "any.required": "missing required name field",
   }),
+  favorite: Joi.boolean(),
+});
+
+const schemaUpdateFavorite = Joi.object({
+  favorite: Joi.boolean().required().messages({
+    "any.required": "missing field favorite",
+  }),
 });
 
 module.exports = {
   addContactSchema,
   updateContactSchema,
+  schemaUpdateFavorite,
 };
